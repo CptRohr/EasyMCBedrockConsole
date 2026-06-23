@@ -30,7 +30,7 @@ public:
 
     enum OutputType { ServerInfoOutput,ServerErrorOutput,ServerStatus,InfoOutput,ErrorOutput,WarningOutput };
     enum ServerState { ServerLoading,ServerStartup,ServerRunning,ServerNotRunning,ServerStopped,ServerShutdown,ServerRestarting };
-    enum ServerDifficulty { Peacefull,Easy,Normal,Hard };
+    enum ServerDifficulty { Peaceful,Easy,Normal,Hard };
     enum PermissionLevel { Member,Operator,Visitor };
 
     class ConfigEntry {

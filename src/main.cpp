@@ -11,6 +11,7 @@
  **
 */
 #include "mainwindow.h"
+#include <database/databasemanager.h>
 
 #include <QApplication>
 #include <QSettings>

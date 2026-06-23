@@ -18,10 +18,13 @@
 #include <server/bedrockserver.h>
 #include <backup/backupmanager.h>
 #include <widgets/playerinfowidget.h>
+#include <addons/addonmanager.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+
+class AddonInstallWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -38,6 +41,8 @@ private:
     Ui::MainWindow *ui;
     BedrockServer *server;
     BackupManager *backups;
+    AddonManager *addonManager;
+    AddonInstallWidget *addonWidget;
     PlayerInfoWidget *playerInfoWidget;
     QLabel *statusBarWidget;
     bool shuttingDown;
@@ -51,6 +56,9 @@ private:
     void setBackupTimerInterval(quint64 msec);
     void setBackupDelayLabel(int delay);
     void setBackupFrequencyLabel(int delayHours);
+
+    void initializeAddonManager(const QString& serverRoot);
+    void updateAddonTabVisibility();
 
 private slots:
     void handleServerStateChange(BedrockServer::ServerState newState);

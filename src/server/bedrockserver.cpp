@@ -569,7 +569,7 @@ BedrockServer::ConfigValueType BedrockServer::getTypeOfConfigValue(QString name)
 {
     if (QStringList({"server-authoritative-block-breaking","correct-player-movement","content-log-file-enabled","texturepack-required","white-list","online-mode","allow-cheats","force-gamemode"}).contains(name)) {
         return BedrockServer::ConfigValueType::Boolean;
-    } else if (QStringList({"max-player","server-port","server-portv6","view-distance","tick-distance","player-idle-timeout","max-threads","compression-threshold","player-movement-score-threshold"}).contains(name)) {
+    } else if (QStringList({"max-players","server-port","server-portv6","view-distance","tick-distance","player-idle-timeout","max-threads","compression-threshold","player-movement-score-threshold"}).contains(name)) {
         return BedrockServer::ConfigValueType::Integer;
     } else if (name=="player-movement-distance-threshold") {
         return BedrockServer::ConfigValueType::Float;
@@ -671,7 +671,7 @@ void BedrockServer::setPermissionLevelForUser(QString xuid, BedrockServer::Permi
     QJsonDocument permJson = QJsonDocument::fromJson(permissionsFile.readAll());
     permissionsFile.close();
 
-    QString permString = level == 0 ? "member" : level == 1 ? "operator" : "Visitor";
+    QString permString = level == 0 ? "member" : level == 1 ? "operator" : "visitor";
 
     if (permJson.isArray()) {
         QJsonArray permissions = permJson.array();

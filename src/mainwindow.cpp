@@ -21,10 +21,13 @@
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QMessageBox>
+#include <widgets/addoninstallwidget.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow), shuttingDown(false), playerInfoWidget(nullptr)
+    , ui(new Ui::MainWindow), shuttingDown(false), playerInfoWidget(nullptr),
+      addonManager(nullptr), addonWidget(nullptr)
 {
     ui->setupUi(this);
     setWindowTitle(tr("Bedrock server console"));
@@ -117,6 +120,15 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     setupUi();
+
+    if (!this->addonWidget) {
+        this->addonWidget = new AddonInstallWidget(nullptr, this);
+        this->ui->tabWidget->addTab(this->addonWidget, tr("Addon Library"));
+    }
+
+    // Initialize addon manager
+    QString serverRoot = getServerRootFolder();
+    initializeAddonManager(serverRoot);
 
     this->handleServerStateChange(this->server->GetCurrentState());
     if (!this->backups->backupStorageFolderValid()) {
@@ -250,9 +262,13 @@ void MainWindow::setupUi()
             this->ui->invalidServerLocationLabel->setHidden(serverLocationValid());
             if (serverLocationValid()) {
                 this->server->setServerRootFolder(text);
+                initializeAddonManager(text);
+            } else {
+                updateAddonTabVisibility();
             }
         } else {
             this->ui->invalidServerLocationLabel->setVisible(true);
+            updateAddonTabVisibility();
         }
     });
     connect(this->ui->selectBackupFolder,&QPushButton::clicked,this,[=]() {this->ui->backupFolder->setText(QFileDialog::getExistingDirectory(this,tr("Select folder for automatic backups"),"",QFileDialog::ShowDirsOnly));});
@@ -360,6 +376,62 @@ void MainWindow::setupUi()
         }
     });
     this->ui->restartAfterSeconds->setText(QSettings().value("server/restartDelaySeconds",120).toString());
+}
+
+void MainWindow::initializeAddonManager(const QString& serverRoot)
+{
+    if (serverRoot.isEmpty()) {
+        updateAddonTabVisibility();
+        return;
+    }
+
+    if (!this->addonManager) {
+        this->addonManager = new AddonManager(serverRoot, this);
+    } else if (this->addonManager->serverRootPath() != serverRoot || !this->addonManager->isReady()) {
+        this->addonManager->initialize(serverRoot);
+    }
+
+    if (!this->addonManager->isReady()) {
+        QString errorMessage = this->addonManager->lastError();
+        if (errorMessage.isEmpty()) {
+            errorMessage = tr("Addon manager failed to initialize.");
+        }
+        QMessageBox::warning(this, tr("Addon Manager"), errorMessage);
+        updateAddonTabVisibility();
+        return;
+    }
+
+    if (!this->addonWidget) {
+        this->addonWidget = new AddonInstallWidget(this->addonManager, this);
+    } else {
+        this->addonWidget->setAddonManager(this->addonManager);
+    }
+
+    if (ui->tabWidget->indexOf(this->addonWidget) < 0) {
+        ui->tabWidget->addTab(this->addonWidget, tr("Addon Library"));
+    }
+
+    this->addonWidget->setEnabled(true);
+    this->addonWidget->refreshPackList();
+    updateAddonTabVisibility();
+}
+
+void MainWindow::updateAddonTabVisibility()
+{
+    if (!this->addonWidget) {
+        return;
+    }
+
+    int idx = ui->tabWidget->indexOf(this->addonWidget);
+    if (idx < 0) {
+        return;
+    }
+
+    bool visible = (this->addonManager && this->addonManager->isReady());
+    ui->tabWidget->setTabEnabled(idx, visible);
+    if (!visible && ui->tabWidget->currentIndex() == idx) {
+        ui->tabWidget->setCurrentIndex(0);
+    }
 }
 
 void MainWindow::setupServerProperties()
